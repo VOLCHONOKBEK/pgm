@@ -17,10 +17,15 @@
 from pyrogram import Client, filters
 from pyrogram.raw import functions
 from pyrogram.types import Message
-
+from itertools import groupby
 from utils.misc import modules_help, prefix
 from utils.scripts import format_exc, interact_with, interact_with_to_delete
-
+import sqlite3 #загрузки библиотеки
+import json
+f = open('/home/owner/py/run/sqlite/xyz.text','w+')
+ 
+conn_chats = sqlite3.connect(r'/home/owner/py/run/sqlite/chat_tb.db')
+cur_chats = conn_chats.cursor()
 
 @Client.on_message(filters.command("inf", prefix) & filters.me)
 async def get_user_inf(client: Client, message: Message):
@@ -48,12 +53,12 @@ async def get_user_inf(client: Client, message: Message):
 |-Scam: <code>{user.scam}</code>
 |-Name: <code>{user.first_name}</code>
 |-Deleted: <code>{user.deleted}</code>
-|-BIO: <code>{about}</code>
+∟-BIO: <code>{about}</code>
 </b>"""
     await message.edit(user_info)
 
 
-@Client.on_message(filters.command("inffull", prefix) & filters.me)
+@Client.on_message(filters.command("infa", prefix) & filters.me)
 async def get_full_user_inf(client: Client, message: Message):
     await message.edit("<b>Receiving the information...</b>")
 
@@ -86,6 +91,10 @@ async def get_full_user_inf(client: Client, message: Message):
             username = "None"
         else:
             username = f"@{user.username}"
+        cur_chats.execute(f"SELECT chat_title  FROM (SELECT  chat_title FROM chats  WHERE  u_id={user.id} ) AS t1 GROUP BY chat_title;")#, count(*) AS COUNT
+        one_result = cur_chats.fetchall()
+        row = list(one_result)
+         
         about = "None" if full_user.about is None else full_user.about
         user_info = f"""|=<b>Username: {username}
 |-Id: <code>{user.id}</code>
@@ -103,12 +112,16 @@ async def get_full_user_inf(client: Client, message: Message):
 |-Verified: <code>{user.verified}</code>
 |-Phone calls available: <code>{full_user.phone_calls_available}</code>
 |-Phone calls private: <code>{full_user.phone_calls_private}</code>
-|-Blocked: <code>{full_user.blocked}</code></b>"""
+|-Blocked: <code>{full_user.blocked}</code></b>
+∟-Chat List: <code>{row}</code></b>"""
         await message.edit(user_info)
+        
+        
     except Exception as e:
         await message.edit(format_exc(e))
 
-
+ 
+  
 modules_help["user_info"] = {
     "inf [reply|id|username]": "Get brief information about user",
     "inffull [reply|id|username": "Get full information about user",
